@@ -172,7 +172,7 @@
       db = getFirestore(app);
       window.isFirebaseConfigured = true;
 
-      // Realtime Listener Firestore untuk Buku Ucapan & Kaunter Hadir
+      // Realtime Listener Firestore untuk Buku Ucapan & Kaunter Hadir[span_1](start_span)[span_1](end_span)
       const q = query(collection(db, "rsvp_guests"), orderBy("createdAt", "desc"));
       onSnapshot(q, (snapshot) => {
         const entries = [];
@@ -195,12 +195,12 @@
         window.renderGuestbookLocal();
       });
 
-      // Fungsi simpan borang ke Firestore (tanpa no telefon)
+      // Fungsi simpan borang ke Firestore (tanpa no telefon)[span_2](start_span)[span_2](end_span)
       window.saveRSVPToFirebase = async function(entryData) {
         return await addDoc(collection(db, "rsvp_guests"), {
           name: entryData.name,
           status: entryData.status,
-          pax: parseInt(entryData.pax || 0),
+          pax: parseInt(entryData.pax || 1),
           wish: entryData.wish,
           createdAt: serverTimestamp(),
           displayDate: entryData.displayDate
@@ -584,7 +584,7 @@
       </svg>
     </div>
 
-    <!-- SECTION: RSVP FORM (NOMBOR TELEFON DIBUANG) -->
+    <!-- SECTION: RSVP FORM -->
     <section id="sectionRSVP" class="px-6 py-8">
       <div class="text-center mb-6">
         <p class="font-cinzel text-[10px] tracking-[0.25em] text-gold-600 uppercase font-semibold">Pengesahan Kehadiran</p>
@@ -627,15 +627,11 @@
             </div>
           </div>
 
+          <!-- RUANGAN TAIP BEBAS JUMLAH PAX -->
           <div id="paxSelectWrapper">
-            <label class="block font-cinzel text-xs uppercase tracking-wider font-semibold text-charcoal mb-1.5">Bilangan Pax Hadir</label>
-            <select id="rsvpPaxInput" class="w-full text-xs px-3.5 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:border-gold-500 transition">
-              <option value="1">1 Orang Tetamu</option>
-              <option value="2" selected>2 Orang (Bersama Pasangan)</option>
-              <option value="3">3 Orang</option>
-              <option value="4">4 Orang</option>
-              <option value="5">5 Orang (Sekeluarga)</option>
-            </select>
+            <label class="block font-cinzel text-xs uppercase tracking-wider font-semibold text-charcoal mb-1.5">Jumlah Bilangan Pax Hadir *</label>
+            <input type="number" id="rsvpPaxInput" min="1" max="50" value="2" placeholder="Cth: 2" class="w-full text-xs px-3.5 py-3 rounded-xl border border-stone-300 bg-white focus:outline-none focus:border-gold-500 transition">
+            <p class="text-[10px] text-stone-400 mt-1">Sila masukkan jumlah keseluruhan tetamu yang akan hadir.</p>
           </div>
 
           <div>
@@ -752,13 +748,13 @@
         <div class="p-3 bg-stone-50 rounded-xl border border-stone-200 flex items-center justify-between">
           <div>
             <p class="text-xs font-bold text-charcoal">Pn. Lily (Ibu)</p>
-            <p class="text-[11px] text-stone-500">+6013-782 9433</p>
+            <p class="text-[11px] text-stone-500">+6019-755 5838</p>
           </div>
           <div class="flex items-center gap-2">
-            <a href="tel:0137829433" class="w-8 h-8 rounded-full bg-stone-200 text-charcoal flex items-center justify-center hover:bg-gold-500 hover:text-white transition">
+            <a href="tel:0197555838" class="w-8 h-8 rounded-full bg-stone-200 text-charcoal flex items-center justify-center hover:bg-gold-500 hover:text-white transition">
               <i class="fa-solid fa-phone text-xs"></i>
             </a>
-            <a href="https://wa.me/60137829433?text=Assalamualaikum,%20tahniah%20atas%20majlis%20perkahwinan" target="_blank" class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition">
+            <a href="https://wa.me/60197555838?text=Assalamualaikum,%20tahniah%20atas%20majlis%20perkahwinan" target="_blank" class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center hover:bg-emerald-600 transition">
               <i class="fa-brands fa-whatsapp text-sm"></i>
             </a>
           </div>
@@ -990,7 +986,8 @@
       const name = document.getElementById('rsvpNameInput').value.trim();
       const statusEl = document.querySelector('input[name="rsvpStatus"]:checked');
       const status = statusEl ? statusEl.value : 'Hadir';
-      const pax = document.getElementById('rsvpPaxInput').value;
+      const paxVal = document.getElementById('rsvpPaxInput').value;
+      const pax = status === 'Hadir' ? (parseInt(paxVal) || 1) : 0;
       const wish = document.getElementById('rsvpWishInput').value.trim();
 
       if (!name) {
@@ -1011,7 +1008,7 @@
       const entryData = {
         name: name,
         status: status,
-        pax: status === 'Hadir' ? parseInt(pax) : 0,
+        pax: pax,
         wish: wish,
         displayDate: timeString
       };
@@ -1052,38 +1049,6 @@
           submitBtn.innerHTML = '<span>Hantar RSVP Sekarang</span>';
         }
       }
-    }
-
-    function copyGuestListSummary() {
-      const entries = window.currentGuestList || [];
-      if (entries.length === 0) {
-        alert('Belum ada tetamu yang mendaftar buat masa ini.');
-        return;
-      }
-
-      let summaryText = "SENARAI TETAMU RSVP (AISYAH & AFIF)\n" +
-                        "Tarikh Jana: " + new Date().toLocaleString('ms-MY') + "\n\n";
-
-      let hadirCount = 0;
-      let totalPax = 0;
-
-      entries.forEach((g, index) => {
-        summaryText += (index + 1) + ". " + g.name + " | " + g.status + 
-                       (g.status === 'Hadir' ? " (" + g.pax + " Pax)" : "") + "\n";
-        if (g.status === 'Hadir') {
-          hadirCount++;
-          totalPax += parseInt(g.pax || 1);
-        }
-      });
-
-      summaryText += "\nJUMLAH HADIR: " + hadirCount + " orang\n" +
-                     "JUMLAH ANGGARAN PAX: " + totalPax + " pax";
-
-      navigator.clipboard.writeText(summaryText).then(() => {
-        alert('Senarai tetamu berjaya disalin! Boleh ditampal ke WhatsApp atau Excel.');
-      }).catch(() => {
-        alert('Gagal menyalin.');
-      });
     }
 
     function escapeHTML(str) {
